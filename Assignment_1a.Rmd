@@ -1,0 +1,130 @@
+---
+title: "Computer Assignment 1a - Econometrics I"
+author: "Jane Birkin, Serge Gainsbourg, Brigitte Bardot"
+date: "August 30, 2022"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r clear memory, include=FALSE}
+# Clear plots
+if(!is.null(dev.list())) dev.off()
+# Clear console
+cat("\014") 
+# Clean workspace
+rm(list=ls())
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "hide")
+```
+
+# I. Preliminaries
+
+**Clearing workspace**
+
+To remove all the objects that are stored in your global environment (but not remove any loaded packages):
+```{r clear memory, results="hide"}
+# Clear plots
+if(!is.null(dev.list())) dev.off()
+# Clear console
+cat("\014") 
+# Clean workspace
+rm(list=ls())
+```
+
+**Packages**
+
+To put all packages (that were previously installed) into memory:
+
+```{r, warning=FALSE, message=FALSE}
+library(foreign)
+library(tidyverse)
+library(dagitty)
+library(ggdag)
+library(dplyr)
+library(tinytex)
+library(stargazer)
+library(readstata13)
+```
+
+
+# II. Introduction to the assignment
+
+To load the dataset into memory:
+
+```{r load data}
+theUrl <- "https://surfdrive.surf.nl/files/index.php/s/j9uSZ4dPSkyqInX/download"
+burglary <- read.dta13 (file = theUrl)
+```
+
+# IV. Causal diagram: visualizing selection into treatment
+
+To define the causal diagram:
+
+```{r nodes}
+ca1a <- dagitty('dag{
+                dog [pos="0,0"]
+                burgl [pos="2,0"]
+                athome [pos="1,2"]
+                
+                dog <- athome -> burgl
+                dog -> burgl
+                }')
+
+```
+
+Plot the causal diagram with *ggdag* as follows:
+
+```{r diagram plot, out.width = "60%"}
+ggdag(ca1a)
+```
+# V. Descriptive statistics
+
+To report the mean (weighted) rate of victimization for households with and without a dog:
+
+```{r descriptive statistics}
+sumburglary <- burglary %>%
+            group_by(dog) %>%
+            summarise(mean_burgl = weighted.mean(burglary,hhweight))
+sumburglary
+```
+
+If we want to produce similar summary statistics for a subgroup, say homeowners, we can use the function *filter* as follows:
+
+```{r descriptive statistics 2}
+sumburglary <- burglary %>%
+            filter(homeowner==1) %>%
+            group_by(dog) %>%
+            summarise(mean_burgl = weighted.mean(burglary,hhweight))
+sumburglary
+```
+
+Etcetera (the above should provide a good start for making your first assignment for Econometrics 1)
+
+```{r}
+sumathome <- burglary %>%
+group_by(dog) %>%
+summarise(mean_athome = weighted.mean(notathome20,hhweight))
+
+sumathome
+```
+
+```{r}
+summary(lm(burglary ~ dog, data=burglary))
+
+```
+
+
+```{r}
+naive <- lm(burglary ~ dog, data=burglary)
+stargazer(naive)
+
+```
+```{r}
+summary(lm(burglary ~ dog + notathome20, data=burglary))
+
+```
+
